@@ -3,4 +3,5 @@
     <string name="label_scarlet_witch">Scarlet Witch</string>
     <string name="label_iron_man">Iron Man</string>
     <string name="label_wolverine">Wolverine Witch</string>
+    <string name="label_tab_place_holder">Tab %d</string>
 </resources>
