@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -55,14 +56,7 @@ public class GalleryFragment extends Fragment {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PICK_PHOTO_REQUEST_CODE && resultCode == RESULT_OK) {
-            try {
-                Uri imageUri = data.getData();
-                InputStream imageStream = getActivity().getContentResolver().openInputStream(imageUri);
-                mBitmaps.add(BitmapFactory.decodeStream(imageStream));
-                mGalleryAdapter.notifyItemInserted(mBitmaps.size() - 1);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
+            new LoadImageAsyncTask().execute(data);
         }
     }
 
@@ -87,5 +81,29 @@ public class GalleryFragment extends Fragment {
         mRecyclerViewGallery.setLayoutManager(new LinearLayoutManager(getActivity()));
         mGalleryAdapter = new GalleryAdapter(mBitmaps);
         mRecyclerViewGallery.setAdapter(mGalleryAdapter);
+    }
+
+    class LoadImageAsyncTask extends AsyncTask<Intent, Void, Bitmap> {
+
+        @Override
+        protected Bitmap doInBackground(Intent... intents) {
+            Bitmap resultBitmap = null;
+            try {
+                Intent data = intents[0];
+                Uri imageUri = data.getData();
+                InputStream imageStream = getActivity().getContentResolver().openInputStream(imageUri);
+                resultBitmap = BitmapFactory.decodeStream(imageStream);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            return resultBitmap;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            super.onPostExecute(bitmap);
+            mBitmaps.add(bitmap);
+            mGalleryAdapter.notifyItemInserted(mBitmaps.size() - 1);
+        }
     }
 }
