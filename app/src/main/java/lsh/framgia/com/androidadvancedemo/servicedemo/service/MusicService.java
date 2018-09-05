@@ -13,7 +13,7 @@ import android.support.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Locale;
 import lsh.framgia.com.androidadvancedemo.R;
 import lsh.framgia.com.androidadvancedemo.servicedemo.listener.OnMediaPlayerStatusListener;
 import lsh.framgia.com.androidadvancedemo.servicedemo.model.Track;
