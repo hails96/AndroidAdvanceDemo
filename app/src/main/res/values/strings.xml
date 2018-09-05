@@ -5,4 +5,6 @@
     <string name="label_wolverine">Wolverine Witch</string>
     <string name="label_tab_place_holder">Tab %d</string>
     <string name="label_open_gallery">Open Gallery</string>
+    <string name="resources_path_place_holder">android.resource://%s/%d</string>
+    <string name="timer_place_holder">%02d:%02d</string>
 </resources>
