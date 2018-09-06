@@ -1,5 +1,7 @@
 package lsh.framgia.com.androidadvancedemo.servicedemo.service;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.media.AudioManager;
@@ -9,11 +11,12 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
+import lsh.framgia.com.androidadvancedemo.MainActivity;
 import lsh.framgia.com.androidadvancedemo.R;
 import lsh.framgia.com.androidadvancedemo.servicedemo.listener.OnMediaPlayerStatusListener;
 import lsh.framgia.com.androidadvancedemo.servicedemo.model.Track;
@@ -21,12 +24,21 @@ import lsh.framgia.com.androidadvancedemo.servicedemo.model.Track;
 public class MusicService extends Service implements MediaPlayer.OnPreparedListener,
         MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener {
 
+    private static final String ACTION_STATE_CHANGE = "lsh.framgia.com.androidadvancedemo.STATE_CHANGE";
+    private static final String ACTION_NEXT = "lsh.framgia.com.androidadvancedemo.NEXT";
+    private static final String ACTION_PREVIOUS = "lsh.framgia.com.androidadvancedemo.PREVIOUS";
+    private static final int NOTIFICATION_ID = 1001;
+    private static final int DEFAULT_REQUEST_CODE = 0;
+    private static final int DEFAULT_FLAG = 0;
     private static final int[] sSongIds = {
             R.raw.nguoi_am_phu_osad,
             R.raw.cham_day_noi_dau_erik,
             R.raw.toimuonyeumotnguoi_khoimy
     };
+
     private final IBinder mBinder = new MusicBinder();
+    private NotificationManagerCompat mNotificationManager;
+    private NotificationCompat.Builder mBuilder;
     private OnMediaPlayerStatusListener mOnMediaPlayerStatusListener;
     private MediaPlayer mMediaPlayer;
     private List<Track> mPlaylist = new ArrayList<>();
@@ -36,6 +48,13 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     public void onCreate() {
         super.onCreate();
         preparePlaylist();
+        mNotificationManager = NotificationManagerCompat.from(this);
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        handleIntent(intent);
+        return START_NOT_STICKY;
     }
 
     @Nullable
@@ -53,6 +72,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     @Override
     public void onPrepared(MediaPlayer mp) {
         mp.start();
+        showNotification();
         if (mOnMediaPlayerStatusListener != null)
             mOnMediaPlayerStatusListener.onSongPrepared(mPlaylist.get(mCurrentSongPos));
     }
@@ -85,10 +105,57 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     private void initMediaPlayer() {
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        mMediaPlayer.setLooping(true);
         mMediaPlayer.setOnPreparedListener(this);
         mMediaPlayer.setOnErrorListener(this);
         mMediaPlayer.setOnCompletionListener(this);
+    }
+
+    private void showNotification() {
+        Track track = mPlaylist.get(mCurrentSongPos);
+        mBuilder = new NotificationCompat.Builder(this, getPackageName())
+                .setSmallIcon(R.drawable.ic_music)
+                .setContentTitle(track.getName())
+                .setContentText(track.getArtist())
+                .setContentIntent(PendingIntent.getActivity(this, 0,
+                        new Intent(this, MainActivity.class), 0))
+                .setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
+                        .setShowActionsInCompactView(1))
+                .addAction(R.drawable.ic_skip_previous, getString(R.string.action_previous),
+                        createNewPendingIntent(ACTION_PREVIOUS));
+        if (mMediaPlayer.isPlaying()) {
+            mBuilder.addAction(R.drawable.ic_pause, getString(R.string.action_change_state),
+                    createNewPendingIntent(ACTION_STATE_CHANGE));
+        } else {
+            mBuilder.addAction(R.drawable.ic_play, getString(R.string.action_change_state),
+                    createNewPendingIntent(ACTION_STATE_CHANGE));
+        }
+        mBuilder.addAction(R.drawable.ic_skip_next, getString(R.string.action_next),
+                createNewPendingIntent(ACTION_NEXT));
+        Notification notification = mBuilder.build();
+        mNotificationManager.notify(NOTIFICATION_ID, notification);
+        startForeground(NOTIFICATION_ID, notification);
+    }
+
+    private PendingIntent createNewPendingIntent(String action) {
+        Intent intent = new Intent(this, MusicService.class);
+        intent.setAction(action);
+        return PendingIntent.getService(this, DEFAULT_REQUEST_CODE, intent, DEFAULT_FLAG);
+    }
+
+    private void handleIntent(Intent intent) {
+        if (intent.getAction() == null) return;
+        switch (intent.getAction()) {
+            case ACTION_NEXT:
+                playNextSong();
+                break;
+            case ACTION_PREVIOUS:
+                playPreviousSong();
+                break;
+            case ACTION_STATE_CHANGE:
+                if (mMediaPlayer.isPlaying()) stopPlayingMusic();
+                else resumePlayingMusic();
+                break;
+        }
     }
 
     public void playSong(int position) {
@@ -118,18 +185,25 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         else playSong(--mCurrentSongPos);
     }
 
+    public Track getPlayingTrack() {
+        return mPlaylist.get(mCurrentSongPos);
+    }
+
     public void stopPlayingMusic() {
         mMediaPlayer.pause();
+        showNotification();
+        stopForeground(false);
         if (mOnMediaPlayerStatusListener != null) mOnMediaPlayerStatusListener.onPaused();
     }
 
     public void resumePlayingMusic() {
         mMediaPlayer.start();
+        showNotification();
         if (mOnMediaPlayerStatusListener != null) mOnMediaPlayerStatusListener.onResumed();
     }
 
     public boolean isPlaying() {
-        return mMediaPlayer.isPlaying();
+        return mMediaPlayer != null && mMediaPlayer.isPlaying();
     }
 
     public int getDuration() {

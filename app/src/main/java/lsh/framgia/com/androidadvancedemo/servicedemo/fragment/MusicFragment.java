@@ -34,7 +34,7 @@ public class MusicFragment extends Fragment implements OnMediaPlayerStatusListen
     private TextView mTextViewTitle;
     private TextView mTextViewProgress;
     private TextView mTextViewDuration;
-    private ImageView mImagePlay;
+    private ImageView mImageAction;
     private ImageView mImageNext;
     private ImageView mImagePrevious;
 
@@ -45,7 +45,7 @@ public class MusicFragment extends Fragment implements OnMediaPlayerStatusListen
     private Runnable mRunnable = new Runnable() {
         @Override
         public void run() {
-            if (mMusicService.isPlaying()) {
+            if (mBound && mMusicService.isPlaying()) {
                 int position = mMusicService.getCurrentPosition();
                 mSeekBarProgress.setProgress(position);
                 mTextViewProgress.setText(StringUtils.convertMillisToTimer(position));
@@ -68,6 +68,11 @@ public class MusicFragment extends Fragment implements OnMediaPlayerStatusListen
                 mMusicService = ((MusicService.MusicBinder) service).getService();
                 mBound = true;
                 mMusicService.setOnMediaPlayerStatusListener(MusicFragment.this);
+
+                if (mMusicService.isPlaying()) {
+                    onSongPrepared(mMusicService.getPlayingTrack());
+                    mImageAction.setImageResource(R.drawable.ic_pause);
+                }
             }
 
             @Override
@@ -77,6 +82,7 @@ public class MusicFragment extends Fragment implements OnMediaPlayerStatusListen
         };
         Intent intent = new Intent(getActivity(), MusicService.class);
         getActivity().bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
+        getActivity().startService(intent);
     }
 
     @Override
@@ -98,6 +104,7 @@ public class MusicFragment extends Fragment implements OnMediaPlayerStatusListen
         super.onDestroy();
         if (getActivity() == null) return;
         getActivity().unbindService(mServiceConnection);
+        mBound = false;
     }
 
     @Override
@@ -105,26 +112,27 @@ public class MusicFragment extends Fragment implements OnMediaPlayerStatusListen
         mTextViewTitle.setText(StringUtils.formatTrackTitle(track.getName(), track.getArtist()));
         mSeekBarProgress.setMax(mMusicService.getDuration());
         mTextViewDuration.setText(StringUtils.convertMillisToTimer(mMusicService.getDuration()));
+        mImageAction.setImageResource(R.drawable.ic_pause);
         getActivity().runOnUiThread(mRunnable);
     }
 
     @Override
     public void onPaused() {
-        mImagePlay.setImageResource(R.drawable.ic_play);
+        mImageAction.setImageResource(R.drawable.ic_play);
     }
 
     @Override
     public void onResumed() {
-        mImagePlay.setImageResource(R.drawable.ic_pause);
+        mImageAction.setImageResource(R.drawable.ic_pause);
     }
 
     private void setupListeners() {
-        mImagePlay.setOnClickListener(new View.OnClickListener() {
+        mImageAction.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!mMusicService.isInitiated()) {
                     mMusicService.playSong(0);
-                    mImagePlay.setImageResource(R.drawable.ic_pause);
+                    mImageAction.setImageResource(R.drawable.ic_pause);
                 } else if (mMusicService.isPlaying()) {
                     mMusicService.stopPlayingMusic();
                 } else {
@@ -137,7 +145,7 @@ public class MusicFragment extends Fragment implements OnMediaPlayerStatusListen
             @Override
             public void onClick(View v) {
                 mMusicService.playPreviousSong();
-                mImagePlay.setImageResource(R.drawable.ic_pause);
+                mImageAction.setImageResource(R.drawable.ic_pause);
             }
         });
 
@@ -145,7 +153,7 @@ public class MusicFragment extends Fragment implements OnMediaPlayerStatusListen
             @Override
             public void onClick(View v) {
                 mMusicService.playNextSong();
-                mImagePlay.setImageResource(R.drawable.ic_pause);
+                mImageAction.setImageResource(R.drawable.ic_pause);
             }
         });
 
@@ -173,7 +181,7 @@ public class MusicFragment extends Fragment implements OnMediaPlayerStatusListen
         mTextViewTitle = view.findViewById(R.id.text_view_title);
         mTextViewProgress = view.findViewById(R.id.text_view_progress);
         mTextViewDuration = view.findViewById(R.id.text_view_duration);
-        mImagePlay = view.findViewById(R.id.image_play);
+        mImageAction = view.findViewById(R.id.image_play);
         mImageNext = view.findViewById(R.id.image_next);
         mImagePrevious = view.findViewById(R.id.image_previous);
     }

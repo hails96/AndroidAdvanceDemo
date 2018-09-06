@@ -7,4 +7,8 @@
     <string name="label_open_gallery">Open Gallery</string>
     <string name="resources_path_place_holder">android.resource://%s/%d</string>
     <string name="timer_place_holder">%02d:%02d</string>
+    <string name="channel_description">Android advance channel</string>
+    <string name="action_change_state">Change State</string>
+    <string name="action_previous">Previous</string>
+    <string name="action_next">Next</string>
 </resources>
