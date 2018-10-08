@@ -3,8 +3,12 @@ package lsh.framgia.com.androidadvancedemo.githubdemo.search;
 import java.util.List;
 
 import lsh.framgia.com.androidadvancedemo.githubdemo.model.User;
+import lsh.framgia.com.androidadvancedemo.githubdemo.model.UsersResponse;
 import lsh.framgia.com.androidadvancedemo.githubdemo.repository.UserRepository;
 import lsh.framgia.com.androidadvancedemo.githubdemo.source.remote.SearchUserAsyncTask;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class GithubPresenter implements GithubContract.Presenter,
         SearchUserAsyncTask.OnResponseListener {
@@ -35,7 +39,21 @@ public class GithubPresenter implements GithubContract.Presenter,
 
     @Override
     public void getUsers(String query) {
-        mUserRepository.getUsers(query, this);
+//        mUserRepository.getUsersViaHttpUrlConnection(query, this);
+        mUserRepository.getUsersViaRetrofit(query, new Callback<UsersResponse>() {
+            @Override
+            public void onResponse(Call<UsersResponse> call, Response<UsersResponse> response) {
+                UsersResponse usersResponse = response.body();
+                if (usersResponse != null) {
+                    mView.searchUserSuccessfully(usersResponse.getUsers());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UsersResponse> call, Throwable t) {
+
+            }
+        });
     }
 
     @Override

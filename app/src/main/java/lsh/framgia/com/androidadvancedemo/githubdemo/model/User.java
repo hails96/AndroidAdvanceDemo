@@ -1,9 +1,15 @@
 package lsh.framgia.com.androidadvancedemo.githubdemo.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class User {
+    @SerializedName("id")
     private String mId;
+    @SerializedName("login")
     private String mName;
+    @SerializedName("avatar_url")
     private String mAvatarUrl;
+    @SerializedName("score")
     private double mScore;
 
     public String getId() {
