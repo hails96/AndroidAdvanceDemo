@@ -1,6 +1,8 @@
 package lsh.framgia.com.androidadvancedemo.githubdemo.source;
 
+import lsh.framgia.com.androidadvancedemo.githubdemo.model.UsersResponse;
 import lsh.framgia.com.androidadvancedemo.githubdemo.source.remote.SearchUserAsyncTask;
+import retrofit2.Callback;
 
 public interface UserDataSource {
 
@@ -8,6 +10,8 @@ public interface UserDataSource {
     }
 
     interface RemoteDataSource extends UserDataSource {
-        void getUsers(String query, SearchUserAsyncTask.OnResponseListener listener);
+        void getUsersViaHttpUrlConnection(String query, SearchUserAsyncTask.OnResponseListener listener);
+
+        void getUsersViaRetrofit(String query, Callback<UsersResponse> callback);
     }
 }

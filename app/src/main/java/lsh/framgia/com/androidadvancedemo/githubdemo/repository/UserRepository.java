@@ -1,9 +1,11 @@
 package lsh.framgia.com.androidadvancedemo.githubdemo.repository;
 
+import lsh.framgia.com.androidadvancedemo.githubdemo.model.UsersResponse;
 import lsh.framgia.com.androidadvancedemo.githubdemo.source.UserDataSource;
 import lsh.framgia.com.androidadvancedemo.githubdemo.source.local.UserLocalDataSource;
 import lsh.framgia.com.androidadvancedemo.githubdemo.source.remote.SearchUserAsyncTask;
 import lsh.framgia.com.androidadvancedemo.githubdemo.source.remote.UserRemoteDataSource;
+import retrofit2.Callback;
 
 public class UserRepository implements UserDataSource.RemoteDataSource,
         UserDataSource.LocalDataSource {
@@ -27,7 +29,12 @@ public class UserRepository implements UserDataSource.RemoteDataSource,
     }
 
     @Override
-    public void getUsers(String query, SearchUserAsyncTask.OnResponseListener listener) {
-        mUserRemoteDataSource.getUsers(query, listener);
+    public void getUsersViaHttpUrlConnection(String query, SearchUserAsyncTask.OnResponseListener listener) {
+        mUserRemoteDataSource.getUsersViaHttpUrlConnection(query, listener);
+    }
+
+    @Override
+    public void getUsersViaRetrofit(String query, Callback<UsersResponse> callback) {
+        mUserRemoteDataSource.getUsersViaRetrofit(query, callback);
     }
 }
